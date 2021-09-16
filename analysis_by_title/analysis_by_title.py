@@ -22,29 +22,6 @@ spark = SparkSession.builder.appName("Big Data Final Project").getOrCreate()
 
 sc = spark.sparkContext
 
-
-# def element_count(input_list):
-#
-#     element_to_count = {}
-#
-#     for element in input_list:
-#         if element in element_to_count:
-#             element_to_count[element] += 1
-#         else:
-#             element_to_count[element] = 1
-#
-#     return element_to_count
-#
-#
-# def total_count(input_map):
-#     tot = 0
-#
-#     for element in input_map:
-#         tot += input_map[element]
-#
-#     return str(tot)
-
-
 title_akas = sc.textFile(input_filepath_1).cache().distinct().map(lambda line: line.strip().split('\t'))
 
 title_basics = sc.textFile(input_filepath_2).cache().distinct().map(lambda line: line.strip().split('\t'))
@@ -64,8 +41,8 @@ title_region = title_info.map(lambda line: ((line[0]), (line[1][1][1], line[1][0
 # (titleID), (primaryTitle, regions)
 title_regions = title_region.reduceByKey(lambda a, b: (a[0], a[1] + "," + b[1]))
 
-# (titleID), (primaryTitle, total number of regions, regions)
-title_count_regions = title_regions.map(lambda line: ((line[0]), (line[1][0], "Number of Regions: " + str(len(line[1][1].split(","))), "Regions: " + line[1][1])))
+# (titleID, primaryTitle), (total number of regions, regions)
+title_count_regions = title_regions.map(lambda line: ((line[0], line[1][0]), ("Regions: " + str(len(line[1][1].split(","))), line[1][1])))
 
 # (titleID), (primaryTitle, language)
 title_language = title_info.map(lambda line: ((line[0]), (line[1][1][1], line[1][0][1]))).filter(lambda line: line[1][1] != "\\N").distinct()
@@ -73,6 +50,12 @@ title_language = title_info.map(lambda line: ((line[0]), (line[1][1][1], line[1]
 # (titleID), (primaryTitle, languages)
 title_languages = title_language.reduceByKey(lambda a, b: (a[0], a[1] + "," + b[1]))
 
-title_count_languages = title_languages.map(lambda line: ((line[0]), (line[1][0], "Number of Languages: " + str(len(line[1][1].split(","))), "Languages: " + line[1][1])))
+# (titleID, primaryTitle), (total number of languages, languages)
+title_count_languages = title_languages.map(lambda line: ((line[0], line[1][0]), ("Languages: " + str(len(line[1][1].split(","))), line[1][1])))
 
-title_count_languages.sortBy(keyfunc=lambda x: x[0], ascending=True).saveAsTextFile(output_filepath)
+# Join
+# (titleID, primaryTitle), ((total number of regions, regions), (total number of languages, languages))
+results = title_count_regions.join(title_count_languages).distinct()
+
+# Save and print
+results.sortBy(keyfunc=lambda x: x[0], ascending=True).saveAsTextFile(output_filepath)
