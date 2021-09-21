@@ -8,7 +8,7 @@ from pyspark.sql import SparkSession
 parser = argparse.ArgumentParser()
 parser.add_argument("--input_path_1", type=str, help="Input file path for title.principals.tsv")
 parser.add_argument("--input_path_2", type=str, help="Input file path for name.basics.tsv")
-# parser.add_argument("--input_path_3", type=str, help="Input file path for title.basics.tsv")
+# parser.add_argument("--input_path_3", type=str, help="Input file path for title.basics.tsv") TODO // inserire i nomi dei film al posto dei tconst nei knownForTitles
 parser.add_argument("--output_path", type=str, help="Output folder")
 
 # parse arguments
@@ -40,14 +40,14 @@ name_basics_nconst = name_basics.map(lambda line: ((line[0]), (line[1], line[2],
 # (nconst, ((primaryName, birthYear, deathYear, primaryProfession, knownForTitles), (tconst, ordering, category, job, characters)))
 cast_info = name_basics_nconst.join(title_principals_nconst).distinct()
 
-# (nconst), (primaryName, tconst, knownForTitles, primaryProfession)
-cast_info_uv = cast_info.map(lambda line: ((line[0]), (line[1][0][0], line[1][1][0], line[1][0][4], line[1][0][3])))
+# (nconst), (primaryName, tconst, primaryProfession, knownForTitles)
+cast_info_uv = cast_info.map(lambda line: ((line[0]), (line[1][0][0], line[1][1][0], line[1][0][3], line[1][0][4])))
 
 # (nconst), (primaryName, list of tconst, primaryProfession, knownForTitles)
-actor_titles = cast_info_uv.reduceByKey(lambda a, b: ((a[0]), (a[1] + "," + b[1]), (a[3]), (a[2])))
+actor_titles = cast_info_uv.reduceByKey(lambda a, b: ((a[0]), (a[1] + "," + b[1]), (a[2]), (a[3])))
 
 # (nconst), ((primaryName, num of tconst, primaryProfession), (knownForTitles))
 actor_titles_count = actor_titles.map(lambda line: ((line[0]), ((line[1][0], len(line[1][1].split(",")), line[1][2]), (line[1][3]))))
 
 # Save and print
-actor_titles_count.sortBy(keyfunc=lambda x: x[1][1], ascending=False).saveAsTextFile(output_filepath)
+actor_titles_count.sortBy(keyfunc=lambda x: x[1][0][1], ascending=False).saveAsTextFile(output_filepath)
