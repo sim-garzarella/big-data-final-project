@@ -8,14 +8,12 @@ from pyspark.sql import SparkSession
 parser = argparse.ArgumentParser()
 parser.add_argument("--input_path_1", type=str, help="Input file path for title.principals.tsv")
 parser.add_argument("--input_path_2", type=str, help="Input file path for name.basics.tsv")
-# parser.add_argument("--input_path_3", type=str, help="Input file path for title.basics.tsv") TODO // inserire i nomi dei film al posto dei tconst nei knownForTitles
 parser.add_argument("--output_path", type=str, help="Output folder")
 
 # parse arguments
 args = parser.parse_args()
 input_filepath_1 = args.input_path_1
 input_filepath_2 = args.input_path_2
-# input_filepath_3 = args.input_path_3
 output_filepath = args.output_path
 
 # initialize SparkSession
@@ -26,16 +24,12 @@ sc = spark.sparkContext
 
 title_principals = sc.textFile(input_filepath_1).cache().distinct().map(lambda line: line.strip().split('\t'))
 name_basics = sc.textFile(input_filepath_2).cache().distinct().map(lambda line: line.strip().split('\t'))
-# title_basics = sc.textFile(input_filepath_3).cache().distinct().map(lambda line: line.strip().split('\t'))
 
 # ((nconst), (tconst, rdering, category, job, characters))
 title_principals_nconst = title_principals.map(lambda line: ((line[2]), (line[0], line[1], line[3], line[4], line[5])))
 
 # ((nconst), (primaryName, birthYear, deathYear, primaryProfession, knownForTitles))
 name_basics_nconst = name_basics.map(lambda line: ((line[0]), (line[1], line[2], line[3], line[4], line[5])))
-
-# (tconst), (primaryTitle)
-# title_basics_uv = title_basics.map(lambda line: ((line[0]), (line[1])))
 
 # (nconst, ((primaryName, birthYear, deathYear, primaryProfession, knownForTitles), (tconst, ordering, category, job, characters)))
 cast_info = name_basics_nconst.join(title_principals_nconst).distinct()

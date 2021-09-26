@@ -51,7 +51,6 @@ def reduceRating(genre_list):  # Input: ["Comedy|4.2", "Short|4.2", "Short|4.5",
         genre_2_rating[element] = sum(genre_2_rating[element]) / len(genre_2_rating[element])
         genre_2_rating[element] = round(genre_2_rating[element], 2)
 
-        print(genre_2_rating[element])
 
     return genre_2_rating
 
