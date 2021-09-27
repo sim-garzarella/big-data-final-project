@@ -1,0 +1,9 @@
+,variable,value,tech
+0,122.1,2.22,Spark Local
+1,244.20,5.07,Spark Local
+2,488.30,9.47,Spark Local
+3,968.40,27.10,Spark Local
+0,239.75,2.12,Spark Cluster
+1,479.51,4.35,Spark Cluster
+2,959.03,5.47,Spark Cluster
+3,1909.97,16.35,Spark Cluster
